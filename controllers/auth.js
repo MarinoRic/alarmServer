@@ -32,6 +32,7 @@ exports.login = async (req, res, next) => {
         };
 
         let token = jwt.sign(payload, process.env.JWT_SECRET, {});
+        res.clearCookie("token");
 
         res.status(200).cookie('token', token, {
             httpOnly: true, secure: true, maxAge: 24 * 60 * 60 * 1000 * 30
