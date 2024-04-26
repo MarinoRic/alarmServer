@@ -10,19 +10,18 @@ const queryReq = `
 
 const protect = async (req, res, next) => {
     let token;
-    if (req.headers.authorization && req.headers.authorization.startsWith("Bearer "))
-        token = req.headers.authorization.split(" ")[1];
+    if (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) token = req.headers.authorization.split(" ")[1];
 
-    else if (req.cookies.token)
-        token = req.cookies.token;
+    else if (req.cookies.token) token = req.cookies.token;
 
-    if (!token)
-        return next(new ErrorResponse('No token provided'));
+    console.log(req.cookies);
+
+    if (!token) return next(new ErrorResponse('No token provided'));
 
     try {
-        let decoded = jwt.verify(token, process.env.JWT_SECRET);
+        let decoded = jwt.verify(token, process.env.JWT_SECRET).id;
 
-        req.query.sql = queryReq;
+         req.query.sql = queryReq;
         req.query.params = [decoded];
 
         req.user = (await executeQuery(req.pool, req.query))[0];
@@ -30,7 +29,7 @@ const protect = async (req, res, next) => {
 
     } catch (err) {
         console.log(err.stack);
-        return next(new ErrorResponse('User not authorized to this route'));
+        return next(new ErrorResponse('User authentication failed'));
     }
 
 }

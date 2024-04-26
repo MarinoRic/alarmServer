@@ -27,11 +27,7 @@ exports.login = async (req, res, next) => {
 
         if (!isMatch) return next(new ErrorResponse('Invalid credetials - po', 401));
 
-        const payload = {
-            id: user.id, email: user.email
-        };
-
-        let token = jwt.sign(payload, process.env.JWT_SECRET, {});
+        let token = jwt.sign({id: user.id}, process.env.JWT_SECRET, {});
         await res.clearCookie("token");
 
         res.status(200).cookie('token', token, {
@@ -58,7 +54,7 @@ exports.register = async (req, res, next) => {
         if (token_admin !== process.env.TOKEN_ADMIN) return next(new ErrorResponse('Invalid token admin', 401));
     }
 
-    let role_ = (role === 'admin') ? 0 : 1;
+    let role_ = (role === 'admin') ? 1 : 2;
 
     try {
         req.query.sql = `
@@ -80,7 +76,7 @@ exports.register = async (req, res, next) => {
         const user = executeQuery(req.pool, req.query);
 
         const payload = {
-            id: user.id, email
+            id: user.id
         };
         let token = jwt.sign(payload, process.env.JWT_SECRET, {});
 

@@ -19,7 +19,7 @@ router.use(connectDB, protect);
 
 router.route('/')
     .get(getAuthorization(['admin', 'user']), getAllSensors,filteredResults)
-    .post(getAuthorization('admin', 'user'), checkZone, createSensor)
+    .post(getAuthorization(['admin', 'user']), checkZone, createSensor)
 
 
 router.route('/:sensorID')
