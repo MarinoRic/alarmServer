@@ -21,9 +21,8 @@ const protect = async (req, res, next) => {
     try {
         let decoded = jwt.verify(token, process.env.JWT_SECRET).id;
 
-         req.query.sql = queryReq;
+        req.query.sql = queryReq;
         req.query.params = [decoded];
-
         req.user = (await executeQuery(req.pool, req.query))[0];
         next();
 
