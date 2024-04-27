@@ -37,7 +37,7 @@ router.route('/:sensorID')
         if (!sensor) return next(new ErrorResponse('Could not find sensor', 400));
 
         const {
-            name = sensor.name, enabled = sensor.enabled, triggered = sensor.triggered, zone = sensor.zone
+            name = sensor.name, enabled = sensor.enabled, triggered = sensor.triggered, zone = sensor.zone,flag= "arduino"
         } = {...req.body};
     }, checkZone, updateSensor)
     .delete(getAuthorization(['admin', 'user']), deleteSensor);

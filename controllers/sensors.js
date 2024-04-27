@@ -88,11 +88,12 @@ exports.updateSensor = async (req, res, next) => {
         name = ?,
         enabled = ?,
         triggered = ?,
-        zone = ?
+        zone = ?,
+        flag = ?
     WHERE id = ?;
 `;
 
-    req.query.params = [name, enabled, triggered, zone, req.params.sensorID];
+    req.query.params = [name, enabled, triggered, zone, , req.params.sensorID];
 
     await executeQuery(req.pool, req.query);
 
