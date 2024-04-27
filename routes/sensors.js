@@ -39,6 +39,7 @@ router.route('/:sensorID')
         const {
             name = sensor.name, enabled = sensor.enabled, triggered = sensor.triggered, zone = sensor.zone,flag= "arduino"
         } = {...req.body};
+        next();
     }, checkZone, updateSensor)
     .delete(getAuthorization(['admin', 'user']), deleteSensor);
 
