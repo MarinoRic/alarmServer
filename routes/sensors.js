@@ -25,22 +25,7 @@ router.route('/')
 
 router.route('/:sensorID')
     .get(getAuthorization(['admin', 'user']), getSensor, filteredResults)
-    .put(getAuthorization(['admin', 'user']), async (req, res, next) => {
-        req.query.sql = `
-        SELECT *
-        FROM user_sensors
-        WHERE user_id = ? AND sensor_id = ? 
-    `
-        req.query.params = [req.user.user_id, req.params.sensorID]
-        const sensor = (await executeQuery(req.pool, req.query))[0];
-
-        if (!sensor) return next(new ErrorResponse('Could not find sensor', 400));
-
-        const {
-            name = sensor.name, enabled = sensor.enabled, triggered = sensor.triggered, zone = sensor.zone,flag= "arduino"
-        } = {...req.body};
-        next();
-    }, checkZone, updateSensor)
+    .put(getAuthorization(['admin', 'user']), updateSensor)
     .delete(getAuthorization(['admin', 'user']), deleteSensor);
 
 module.exports = router;
