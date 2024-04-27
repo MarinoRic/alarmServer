@@ -68,19 +68,7 @@ exports.getSensor = async (req, res, next) => {
 
 
 exports.updateSensor = async (req, res, next) => {
-    req.query.sql = `
-        SELECT *
-        FROM user_sensors
-        WHERE user_id = ? AND sensor_id = ? 
-    `
-    req.query.params = [req.user.user_id, req.params.sensorID]
-    const sensor = (await executeQuery(req.pool, req.query))[0];
 
-    if (!sensor) return next(new ErrorResponse('Could not find sensor', 400));
-
-    const {
-        name = sensor.name, enabled = sensor.enabled, triggered = sensor.triggered, zone = sensor.zone
-    } = {...req.body};
 
     req.query.sql = `
         SELECT COUNT(*) AS founded_sensor
