@@ -73,26 +73,18 @@ exports.updateSensor = async (req, res, next) => {
         FROM user_sensors
         WHERE user_id = ? AND sensor_id = ? 
     `
+
     req.query.params = [req.user.user_id, req.params.sensorID]
     const sensor = (await executeQuery(req.pool, req.query))[0];
 
     if (!sensor) return next(new ErrorResponse('Could not find sensor', 400));
 
+    console.log(JSON.stringify(sensor));
+
     const {
-        triggered = sensor.triggered,flag= "arduino"
+        triggered = sensor.triggered,flag = "arduino"
     } = {...req.body};
 
-    req.query.sql = `
-        SELECT COUNT(*) AS founded_sensor
-        FROM user_sensors
-        WHERE user_id = ? AND name = ? AND sensor_id !=  ? 
-    `;
-
-    req.query.params = [req.user.user_id, name, req.params.sensorID]
-
-    const isFounded = (await executeQuery(req.pool, req.query))[0].founded_sensor;
-
-    if (isFounded) return next(new ErrorResponse(`Is not possible to change name in ${name}: User already had registered a sensor with this one`, 400));
 
     req.query.sql = `
     UPDATE sensors
@@ -100,9 +92,10 @@ exports.updateSensor = async (req, res, next) => {
         triggered = ?,
         flag = ?
     WHERE id = ?;
-`;
+    `;
 
     req.query.params = [triggered,flag , req.params.sensorID];
+    console.log(req.query.params);
 
     await executeQuery(req.pool, req.query);
 
