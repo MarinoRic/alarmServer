@@ -3,25 +3,29 @@
 const ErrorResponse = require('./ErrorResponse'); // Assicurati che il percorso sia corretto
 
 function executeQuery(pool, query) {
-    const sql = query.sql;
-    const params = query.params || [];
+    try {
+        const sql = query.sql;
+        const params = query.params || [];
 
-    return new Promise((resolve, reject) => {
-        pool.getConnection((err, connection) => {
-            if (err) {
-                reject(new ErrorResponse('Failed to obtain database connection: ' + err.message, 500));
-                return;
-            }
-            connection.query(sql, params, (error, results) => {
-                connection.release();
-                if (error) {
-                    reject(new ErrorResponse('Failed to execute query: ' + error.message, 400));
+        return new Promise((resolve, reject) => {
+            pool.getConnection((err, connection) => {
+                if (err) {
+                    reject(new ErrorResponse('Failed to obtain database connection: ' + err.message, 500));
                     return;
                 }
-                resolve(results);
+                connection.query(sql, params, (error, results) => {
+                    connection.release();
+                    if (error) {
+                        reject(new ErrorResponse('Failed to execute query: ' + error.message, 400));
+                        return;
+                    }
+                    resolve(results);
+                });
             });
         });
-    });
+    }catch(err){
+        console.log("Error: " + err.stack);
+    }
 }
 
 module.exports.executeQuery = executeQuery;

@@ -14,16 +14,17 @@ const protect = async (req, res, next) => {
 
     else if (req.cookies.token) token = req.cookies.token;
 
-    console.log(req.cookies);
 
     if (!token) return next(new ErrorResponse('No token provided'));
 
     try {
-        let decoded = jwt.verify(token, process.env.JWT_SECRET).id;
+        let decoded =await jwt.verify(token, process.env.JWT_SECRET).id;
 
         req.query.sql = queryReq;
+        console.log("decoded: " + decoded);
         req.query.params = [decoded];
         req.user = (await executeQuery(req.pool, req.query))[0];
+        console.log("USER: " + req.user);
         next();
 
     } catch (err) {
