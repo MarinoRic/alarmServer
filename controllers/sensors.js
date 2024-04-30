@@ -105,6 +105,31 @@ exports.updateSensor = async (req, res, next) => {
     console.log(req.pool, JSON.stringify(req.query));
     await executeQuery(req.pool, req.query);
 
+    let type;
+    if(sensor.triggered !== triggered){
+        type = (req.body.triggered === 1) ? 3 : 4;
+        req.query.sql = `
+        INSERT INTO sensorslogs(type,sensor,user)
+        VALUES(?,?,?,?);
+    `;
+
+        req.query.params = [type,req.params.sensorID,req.user.user_id];
+        console.log(req.pool, JSON.stringify(req.query));
+        await executeQuery(req.pool, req.query);
+    }
+
+    if(sensor.flag !== flag){
+        type = (req.body.flag === 'arduino') ? 6 : 5;
+        req.query.sql = `
+        INSERT INTO sensorslogs(type,sensor,user)
+        VALUES(?,?,?,?);
+    `;
+
+        req.query.params = [type,req.params.sensorID,req.user.user_id];
+        console.log(req.pool, JSON.stringify(req.query));
+        await executeQuery(req.pool, req.query);
+    }
+
     res.status(200).json({success: true})
 }
 
