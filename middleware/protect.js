@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const ErrorResponse = require("../utils/ErrorResponse");
-const {executeQuery} = require("../utils/query");
+const { executeQuery } = require("../utils/query");
 
 const queryReq = `
     SELECT * 
@@ -10,27 +10,32 @@ const queryReq = `
 
 const protect = async (req, res, next) => {
     let token;
-    if (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) token = req.headers.authorization.split(" ")[1];
-
+    if (req.headers.authorization && req.headers.authorization.startsWith("Bearer "))
+        token = req.headers.authorization.split(" ")[1];
     else if (req.cookies.token) token = req.cookies.token;
 
-
-    if (!token) return next(new ErrorResponse('No token provided'));
+    if (!token) return next(new ErrorResponse('No token provided', 401));
 
     try {
-        let decoded =await jwt.verify(token, process.env.JWT_SECRET).id;
+        let decoded = await jwt.verify(token, process.env.JWT_SECRET);
 
         req.query.sql = queryReq;
-        console.log("decoded: " + decoded);
-        req.query.params = [decoded];
-        req.user = (await executeQuery(req.pool, req.query))[0];
-        console.log("USER: " + req.user);
-        next();
+        req.query.params = [decoded.id];
 
+        console.log("decoded: " + JSON.stringify(decoded));
+        const users = await executeQuery(req.pool, req.query);
+        req.user = users[0];
+
+        if (!req.user) {
+            return next(new ErrorResponse('User not found', 404));
+        }
+
+        console.log("USER: " + JSON.stringify(req.user));
+        next();
     } catch (err) {
         console.log(err.stack);
-        return next(new ErrorResponse('User authentication failed'));
+        return next(new ErrorResponse('User authentication failed', 401));
     }
-
 }
+
 module.exports = protect;

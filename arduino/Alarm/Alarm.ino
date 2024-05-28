@@ -142,7 +142,6 @@ String HttpReq(const char* type, const String& url, const String& requestBody, i
     httpCode = -1;
     return "{}";
   }
-
   if (!token.isEmpty()) {
     http.addHeader("Authorization", "Bearer " + token);
   } else if (url != "/login") {

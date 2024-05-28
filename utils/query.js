@@ -4,6 +4,7 @@ const ErrorResponse = require('./ErrorResponse'); // Assicurati che il percorso 
 
 function executeQuery(pool, query) {
     try {
+
         const sql = query.sql;
         const params = query.params || [];
 
@@ -13,6 +14,7 @@ function executeQuery(pool, query) {
                     reject(new ErrorResponse('Failed to obtain database connection: ' + err.message, 500));
                     return;
                 }
+
                 connection.query(sql, params, (error, results) => {
                     connection.release();
                     if (error) {

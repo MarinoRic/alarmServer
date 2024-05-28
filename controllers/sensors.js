@@ -73,65 +73,101 @@ exports.getSensor = async (req, res, next) => {
 
 
 exports.updateSensor = async (req, res, next) => {
-    req.query.sql = `
-        SELECT *
-        FROM user_sensors
-        WHERE user_id = ? AND sensor_id = ? 
-    `
-
-    req.query.params = [req.user.user_id, req.params.sensorID]
-    const sensor = (await executeQuery(req.pool, req.query))[0];
-
-    if (!sensor) return next(new ErrorResponse('Could not find sensor', 400));
-
-    console.log(JSON.stringify(sensor));
-
-    const {
-        triggered = sensor.triggered,flag = "arduino"
-    } = {...req.body};
-
-
-    req.query.sql = `
-    UPDATE sensors
-    SET 
-        triggered = ?,
-        flag = ?
-    WHERE id = ?;
-    `;
-
-    req.query.params = [triggered,flag , req.params.sensorID];
-    console.log(req.query.params);
-
-    console.log(req.pool, JSON.stringify(req.query));
-    await executeQuery(req.pool, req.query);
-
-    let type;
-    if(sensor.triggered !== triggered){
-        type = (req.body.triggered === 1) ? 3 : 4;
+    try {
         req.query.sql = `
-        INSERT INTO sensorslogs(type,sensor,user)
-        VALUES(?,?,?,?);
-    `;
+            SELECT *
+            FROM user_sensors
+            WHERE user_id = ? AND sensor_id = ?;
+        `;
+        req.query.params = [req.user.user_id, req.params.sensorID];
 
-        req.query.params = [type,req.params.sensorID,req.user.user_id];
-        console.log(req.pool, JSON.stringify(req.query));
-        await executeQuery(req.pool, req.query);
-    }
+        const sensorResult = await executeQuery(req.pool, req.query);
+        const sensor = sensorResult[0];
 
-    if(sensor.flag !== flag){
-        type = (req.body.flag === 'arduino') ? 6 : 5;
+        if (!sensor) {
+            return next(new ErrorResponse('Could not find sensor', 400));
+        }
+
+        const {
+            triggered = sensor.triggered,
+            flag = sensor.flag,
+            enabled = sensor.enabled,
+            name = sensor.name
+        } = { ...req.body };
+
+        if (flag == null) {
+            return next(new ErrorResponse('Flag cannot be null', 400));
+        }
+
         req.query.sql = `
-        INSERT INTO sensorslogs(type,sensor,user)
-        VALUES(?,?,?,?);
-    `;
-
-        req.query.params = [type,req.params.sensorID,req.user.user_id];
-        console.log(req.pool, JSON.stringify(req.query));
+            UPDATE sensors
+            SET 
+                triggered = ?,
+                flag = ?,
+                enabled = ?,
+                name = ?
+            WHERE id = ?;
+        `;
+        req.query.params = [triggered, flag, enabled, name, req.params.sensorID];
         await executeQuery(req.pool, req.query);
-    }
 
-    res.status(200).json({success: true})
-}
+        const logQueries = [];
+
+        if (sensor.triggered !== triggered) {
+            const type = (triggered === 1) ? 3 : 4;
+            logQueries.push({
+                sql: `
+                    INSERT INTO sensorslogs(type, sensor, user)
+                    VALUES(?, ?, ?);
+                `,
+                params: [type, req.params.sensorID, req.user.user_id]
+            });
+        }
+
+        if (sensor.flag !== flag) {
+            const type = (flag === 'arduino') ? 5 : 6;
+            logQueries.push({
+                sql: `
+                    INSERT INTO sensorslogs(type, sensor, user)
+                    VALUES(?, ?, ?);
+                `,
+                params: [type, req.params.sensorID, req.user.user_id]
+            });
+        }
+
+        if (sensor.enabled !== enabled) {
+            const type = (enabled === 1) ? 1 : 2;
+            logQueries.push({
+                sql: `
+                    INSERT INTO sensorslogs(type, sensor, user)
+                    VALUES(?, ?, ?);
+                `,
+                params: [type, req.params.sensorID, req.user.user_id]
+            });
+        }
+
+        if (sensor.name !== name) {
+            const type = 7;
+            logQueries.push({
+                sql: `
+                    INSERT INTO sensorslogs(type, sensor, user)
+                    VALUES(?, ?, ?);
+                `,
+                params: [type, req.params.sensorID, req.user.user_id]
+            });
+        }
+
+        for (const logQuery of logQueries) {
+            req.query.sql = logQuery.sql;
+            req.query.params = logQuery.params;
+            await executeQuery(req.pool, req.query);
+        }
+
+        res.status(200).json({ success: true });
+    } catch (error) {
+        next(error);
+    }
+};
 
 exports.deleteSensor = async (req, res, next) => {
 
